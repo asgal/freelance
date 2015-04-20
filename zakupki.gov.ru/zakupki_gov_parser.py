@@ -269,6 +269,7 @@ def main():
         _action = 'export'
             
     if _action == 'export':
+        printLog( "Start export to file %s" % ( _export_path ) )
         cursor = sqlConn.execute( "SELECT `full_name`, `short_name`, `phone`, `fax`, `address`, `email`, `name` FROM data" )
         rows = cursor.fetchall()
         
@@ -280,10 +281,12 @@ def main():
             worksheet.write( 0, i, header )
             
         for ( i, row ) in enumerate( rows ):
-            for j in xrange( len( rows ) ):
-                worksheet.write( i + 1, j, row[j] )
+            for ( j, field_text ) in enumerate( row ):
+                worksheet.write( i + 1, j, field_text )
                 
         workbook.close()
+        
+        printLog( "Export success" )
     
     sqlConn.close()
 
