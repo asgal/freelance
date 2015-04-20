@@ -7,8 +7,9 @@ import sys
 import getopt
 import requests
 from lxml import html
+import xlsxwriter
 
-_version    = '1.0.1'
+_version    = '1.0.2'
 _file_name  = "zakupki_gov_parser"
 
 _verbose    = False
@@ -179,15 +180,20 @@ def main():
     global _action
     global _log_write
     global _log_path
+    global _export_path
+    global _export_headers
+    global _sleep_time
     
     # Разбор параметров командной строки
-    options, remainder = getopt.getopt( sys.argv[1:], 'vd:l:', [
+    options, remainder = getopt.getopt( sys.argv[1:], 'vd:l:s:', [
                                                                 'verbose',
                                                                 'version',
-                                                                'database=',
+                                                                'dbfile=',
                                                                 'linksfile=',
                                                                 'action=',
-                                                                'log='
+                                                                'logfile=',
+                                                                'exportfile=',
+                                                                'sleep='
                                                             ] )
 
     for opt, arg in options:
@@ -198,7 +204,7 @@ def main():
             print "zakupki.gov parser version: %s" % ( _version )
             exit(0)
 
-        elif opt in ( '-d', '--database' ):
+        elif opt in ( '-d', '--dbfile' ):
             _db_path = arg
 
         elif opt == '--action':
@@ -217,9 +223,15 @@ def main():
         elif opt in ( '-l', '--linksfile' ):
             _links_path = arg
         
-        elif opt == '--log':
+        elif opt == '--logfile':
             _log_write = True
             _log_path = arg
+         
+        elif opt == '--exportfile':
+            _export_path = arg
+            
+        elif opt in ( '-s', '--sleep' ):
+            _sleep_time = int( arg )
 
     # Соединение с базой данных
     sqlConn = sqlite3.connect( _db_path )
@@ -257,7 +269,21 @@ def main():
         _action = 'export'
             
     if _action == 'export':
-        pass
+        cursor = sqlConn.execute( "SELECT `full_name`, `short_name`, `phone`, `fax`, `address`, `email`, `name` FROM data" )
+        rows = cursor.fetchall()
+        
+        workbook = xlsxwriter.Workbook( _export_path )
+        worksheet = workbook.add_worksheet()
+        
+        # Заголовки
+        for ( i, header ) in enumerate( _export_headers ):
+            worksheet.write( 0, i, header )
+            
+        for ( i, row ) in enumerate( rows ):
+            for j in xrange( len( rows ) ):
+                worksheet.write( i + 1, j, row[j] )
+                
+        workbook.close()
     
     sqlConn.close()
 
