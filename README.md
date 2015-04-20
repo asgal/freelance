@@ -1,2 +1,2 @@
 # freelance
-project for freelance
+Repo projects for freelance
