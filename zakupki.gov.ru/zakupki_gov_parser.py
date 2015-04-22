@@ -281,17 +281,22 @@ def main():
 		_action = 'parse'
 		
 	if _action == 'parse':
-		cursor = sqlConn.execute( "SELECT `id`, `url` FROM `links` WHERE `res` = '0'" )
-		rows = cursor.fetchall()
-		for row in rows:
-			if parseOrg( row[0], row[1], sqlConn ):
-				sqlConn.execute( "UPDATE `links` SET `res` = 1 WHERE `id` = %d" % ( row[0] ) )
-				sqlConn.commit()
-				printLog( "Parse %s success . . ." % ( 'http://zakupki.gov.ru' + row[1] ) )
-			else:
-				printLog( "Parse %s failed . . ." % ( 'http://zakupki.gov.ru' + row[1] ) )
-				
-			time.sleep( _sleep_time )
+		while True:
+			cursor = sqlConn.execute( "SELECT `id`, `url` FROM `links` WHERE `res` = '0'" )
+			rows = cursor.fetchall()
+			
+			if len( rows ) == 0:
+				break
+			
+			for row in rows:
+				if parseOrg( row[0], row[1], sqlConn ):
+					sqlConn.execute( "UPDATE `links` SET `res` = 1 WHERE `id` = %d" % ( row[0] ) )
+					sqlConn.commit()
+					printLog( "Parse %s success . . ." % ( 'http://zakupki.gov.ru' + row[1] ) )
+				else:
+					printLog( "Parse %s failed . . ." % ( 'http://zakupki.gov.ru' + row[1] ) )
+					
+				time.sleep( _sleep_time )
 			
 		_action = 'export'
 			
